@@ -1,0 +1,7 @@
+#!/bin/bash
+
+if [ -e /cbica ]; then
+    singularity run --cleanenv --bind /cbica /cbica/home/robertft/simg/neuror_latest.sif R $@
+else
+    echo "Error: unable to bind mount /cbica; are you on CUBIC?"
+fi
