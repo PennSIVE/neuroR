@@ -1,0 +1,7 @@
+#!/bin/bash
+
+if [ -e $SINGULARITY_BINDPATH ]; then
+    singularity run --cleanenv $NEUROR_DIR/$NEUROR_VERSION/containers/neuror_latest.sif Rscript $@
+else
+    echo "Error: unable to bind mount '$SINGULARITY_BINDPATH'"
+fi

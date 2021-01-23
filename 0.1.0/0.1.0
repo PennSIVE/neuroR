@@ -117,8 +117,8 @@ if  {[info exists conflictsUNLOAD]} {
 
 
 
-if {[file isdirectory $pkghome/bin]} {
-	prepend-path PATH $pkghome/bin
+if {[file isdirectory $pkghome/$version/bin]} {
+	prepend-path PATH $pkghome/$version/bin
 }
 if {[file isdirectory $pkghome/man]} {
 	prepend-path MANPATH $pkghome/share/man
@@ -158,6 +158,7 @@ if { $CMakeConfigFile ne "" } {
 	
 
 setenv ${PACKAGE}_DIR $pkghome
+setenv ${PACKAGE}_VERSION $version
 setenv SINGULARITYENV_NSLOTS [getenv NSLOTS]
 setenv SINGULARITYENV_ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS [getenv NSLOTS]
 setenv SINGULARITYENV_OMP_NUM_THREADS [getenv NSLOTS]
@@ -165,3 +166,4 @@ setenv SINGULARITYENV_OMP_THREAD_LIMIT [getenv NSLOTS]
 setenv SINGULARITYENV_MKL_NUM_THREADS [getenv NSLOTS]
 setenv SINGULARITYENV_OPENBLAS_NUM_THREADS [getenv NSLOTS]
 setenv SINGULARITYENV_ANTS_RANDOM_SEED 123
+setenv SINGULARITY_BINDPATH /cbica
