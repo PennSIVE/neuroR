@@ -14,3 +14,6 @@ docker run --rm repronim/neurodocker:master generate docker \
     --dcm2niix version=latest method=source \
     | docker build -t pennsive/neurodocker:buster -
 # note: without multiarch-support dpkg will not be able to install the pre-dependancy libxp6
+
+docker build -t pennsive/neuror:4.0 .
+
