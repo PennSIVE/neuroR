@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 docker pull repronim/neurodocker:master # get latest version
 docker run --rm repronim/neurodocker:master generate docker \
     --pkg-manager apt \
@@ -16,4 +18,7 @@ docker run --rm repronim/neurodocker:master generate docker \
 # note: without multiarch-support dpkg will not be able to install the pre-dependancy libxp6
 
 docker build -t pennsive/neuror:4.0 .
-
+id=$(docker images --format="{{.Repository}}:{{.Tag}} {{.ID}}" | egrep "^pennsive/neuror:4.0 " | cut -d' ' -f2)
+docker tag $id pennsive/neuror
+docker push pennsive/neuror:4.0
+docker push pennsive/neuror

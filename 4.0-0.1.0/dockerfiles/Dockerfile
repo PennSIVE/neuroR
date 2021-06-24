@@ -39,11 +39,11 @@ RUN apt-get update && apt-get install -y \
             libgsl-dev \
             libcgal-dev \
             libglu1-mesa-dev \
-            libglu1-mesa-dev \
             libtiff5-dev \
+            libmagick++-dev \
+            libv8-dev \
             python3 \
             python3-pip \
-            && pip3 install nipype pybids pyradiomics drmaa flywheel-sdk datalad datalad-neuroimaging datalad-container numpy scipy nibabel h5py \
             && wget https://cran.rstudio.com/src/base/R-${R_VERSION_MAJOR}/R-${R_VERSION_MAJOR}.${R_VERSION_MINOR}.${R_VERSION_PATCH}.tar.gz \
             && tar zxvf R-${R_VERSION_MAJOR}.${R_VERSION_MINOR}.${R_VERSION_PATCH}.tar.gz \
             && rm R-${R_VERSION_MAJOR}.${R_VERSION_MINOR}.${R_VERSION_PATCH}.tar.gz \
@@ -52,16 +52,23 @@ RUN apt-get update && apt-get install -y \
             && make \
             && make install \
             && echo 'options(repos = c(CRAN = "https://cran.rstudio.com/"), download.file.method = "libcurl")' >> /usr/local/lib/R/etc/Rprofile.site \
-            && Rscript -e "\
-            install.packages(c('devtools', 'BiocManager', 'argparser', 'reticulate', 'rlist', 'oro.nifti', 'oro.dicom', 'fslr', 'WhiteStripe', 'matrixStats', 'R.matlab', 'abind', 'R.utils', 'RNifti', 'stapler', 'testthat', 'hexSticker', 'dplyr', 'oasis', 'fslr', 'plyr', 'misc3d', 'pixmap', 'colormap', 'gifti', 'cifti', 'ROCR', 'freesurfer', 'freesurferformats', 'broom', 'broom.mixed', 'geepack', 'lme4', 'magrittr', 'neurobase', 'pbapply', 'purrr', 'readr', 'stringr', 'tibble', 'tidyr', 'voxel', 'forcats', 'gridExtra', 'RIA', 'Rfast', 'RJSONIO', 'pbmcapply', 'vesselr', 'tidyverse', 'caret', 'DMwR', 'openxlsx', 'acPCA', 'randomForest', 'RSpectra', 'doRNG', 'doParallel', 'doMC', 'doRedis', 'future.apply', 'badgecreatr'), repos='http://cran.rstudio.com'); \
-            BiocManager::install(c('rhdf5', 'rhdf5filters', 'DelayedArray', 'DelayedMatrixStats', 'HDF5Array'));"
-RUN Rscript -e "remotes::install_github(c('ANTsX/ANTsRCore@v0.7.4.9', 'ANTsX/ANTsR@v0.5.7.4'))" \
-Rscript -e "remotes::install_github(c('muschellij2/extrantsr', 'muschellij2/NiftiArray', 'muschellij2/oasis', 'avalcarcel9/mimosa', 'muschellij2/malf.templates', 'avalcarcel9/rtapas'))" \
+            && pip3 install nipype pybids pyradiomics drmaa rpy2 flywheel-sdk datalad datalad-neuroimaging datalad-container numpy scipy nibabel h5py \
+            && fspython -m pip install tensorflow==1.13.1 \
+            && Rscript -e "install.packages(c('devtools', 'BiocManager', 'argparser', 'reticulate', 'Rdpack', 'FactoMineR', 'factoextra', 'rlist', 'oro.nifti', 'oro.dicom', 'fslr', 'WhiteStripe', 'matrixStats', 'R.matlab', 'abind', 'R.utils', 'RNifti', 'stapler', 'testthat', 'hexSticker', 'dplyr', 'oasis', 'plyr', 'misc3d', 'pixmap', 'colormap', 'gifti', 'cifti', 'ROCR', 'freesurfer', 'freesurferformats', 'broom', 'broom.mixed', 'geepack', 'lme4', 'magrittr', 'neurobase', 'pbapply', 'purrr', 'readr', 'stringr', 'tibble', 'tidyr', 'voxel', 'forcats', 'gridExtra', 'RIA', 'Rfast', 'RJSONIO', 'pbmcapply', 'vesselr', 'tidyverse', 'caret', 'DMwR', 'openxlsx', 'acPCA', 'randomForest', 'RSpectra', 'doRNG', 'doParallel', 'doMC', 'doRedis', 'future.apply', 'badgecreatr', 'fsbrain', 'mclust', 'paletteer', 'kableExtra', 'stargazer', 'flextable'))"
+# less stable packages / from development sources
+RUN Rscript -e "BiocManager::install(c('rhdf5', 'rhdf5filters', 'DelayedArray', 'DelayedMatrixStats', 'HDF5Array'));"
+RUN Rscript -e "remotes::install_github(c('ANTsX/ANTsRCore@v0.7.4.9', 'ANTsX/ANTsR@v0.5.7.4'))"
+RUN $FSLDIR/etc/fslconf/fslpython_install.sh -f $FSLDIR && \
+    Rscript -e "source('https://neuroconductor.org/neurocLite.R'); neuro_install(c('extrantsr', 'NiftiArray', 'oasis', 'mimosa', 'malf.templates', 'rtapas'), release_repo = 'github')" && \
+    Rscript -e "remotes::install_github(c('jcbeer/longCombat', 'jfortin1/RAVEL'))" \
 # todo: figure out why installing lesiontools from github doesn't work
-git clone https://github.com/jdwor/lesiontools.git && Rscript -e "install.packages('./lesiontools', repos = NULL, type='source')" && rm -rf lesiontools && \
+    git clone https://github.com/jdwor/lesiontools.git && Rscript -e "install.packages('./lesiontools', repos = NULL, type='source')" && rm -rf lesiontools && \
 # todo: not sure whether to include this PCA library in main image
-git clone https://github.com/linzx06/AC-PCA.git && Rscript -e "chooseCRANmirror(graphics=FALSE, ind=60); install.packages('./AC-PCA/R_package/acPCA', repos = NULL, type='source')" && rm -rf AC-PCA && \
-git clone https://github.com/PennSIVE/freesurfer.git && cd freesurfer && git checkout mri_vol2surf && Rscript -e "install.packages('.', repos = NULL, type='source')" && cd .. && rm -rf freesurfer && \
-ln -s bash /bin/sh.bash && mv /bin/sh.bash /bin/sh && \
-# ^freesurfer weirdly tries to call a bash script with sh, so replace sh with bash
-fspython -m pip install tensorflow==1.13.1
+    git clone https://github.com/linzx06/AC-PCA.git && Rscript -e "chooseCRANmirror(graphics=FALSE, ind=60); install.packages('./AC-PCA/R_package/acPCA', repos = NULL, type='source')" && rm -rf AC-PCA && \
+    git clone https://github.com/Jfortin1/ComBatHarmonization.git && cd ComBatHarmonization/R/neuroCombat && Rscript -e "install.packages('.', repos = NULL, type='source')" && cd ../../.. && rm -rf ComBatHarmonization && \
+    git clone https://github.com/PennSIVE/freesurfer.git && cd freesurfer && git checkout mri_vol2surf && Rscript -e "install.packages('.', repos = NULL, type='source')" && cd .. && rm -rf freesurfer && \
+    ln -s bash /bin/sh.bash && mv /bin/sh.bash /bin/sh
+    # ^freesurfer weirdly tries to call a bash script with sh, so replace sh with bash
+# RUN Rscript -e "install.packages('fsbrain')"
+# RUN Rscript -e "install.packages('mclust')"
+ENV LD_LIBRARY_PATH=/usr/local/lib/R/library/methods/libs:/usr/local/lib/R/lib:${LD_LIBRARY_PATH}
