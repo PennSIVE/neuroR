@@ -43,8 +43,8 @@ module-whatis "Set up the environment for $package version $version"
 
 
 set self $package/$version
-# set packagedir /cbica/software/$source/$package/$version
-set packagedir /cbica/home/robertft/repos/neuroR
+set packagedir /cbica/software/$source/$package/$version
+# set packagedir /cbica/software/lab/neuroR
 
 
 ########################################################################################
