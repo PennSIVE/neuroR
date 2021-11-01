@@ -1,0 +1,169 @@
+#%Module1.0#####################################################################
+# $Id: 0.6.0 1571 2018-04-27 23:02:29Z bergmama@UPHS.PENNHEALTH.PRV $
+
+
+############# Basic Definitions ###############
+
+# set to "external" or "lab"
+set source lab	
+
+# set to package directory name (exact spelling of directory name, case-sensitive)
+set package neuroR
+# set package symbolic name (uppercase)
+set PACKAGE NEUROR
+
+# set to version number via the name of the module file (ie., "1.3.4"). Only set manually
+# if the filename is NOT the same as the directory of the installed package
+## set version VERSION_NUM
+set version	[file tail $ModulesCurrentModulefile]
+
+proc ModulesHelp { } { puts stderr "\tSet up the environment for $package version $version\n" }
+module-whatis "Set up the environment for $package version $version"
+
+
+################ Conflicts and Dependencies ####
+# List of conflicting modules -- warn but do not automatically unload.
+# uncomment and set to the names of conflicting modules
+#set conflictsWARN
+
+# List of conflicting modules -- warn and automatically unload
+# uncomment and set to the names of modules to warn about
+#set conflictsUNLOAD 
+
+# List of dependencies
+# uncomment and set to the names of modules that must be automatically loaded
+#set depends "afni/17.2.10 ants/2.1.0 fsl/5.0.10 c3d/1.0.0"
+
+###############################################################################
+
+###############################################################################
+# If the package is really, really, really well-behaved and installs cleanly, then there
+# isn't any need to change vlues below here....
+###############################################################################
+
+
+set self $package/$version
+set packagedir /cbica/software/$source/$package/$version
+# set packagedir /cbica/software/lab/neuroR
+
+
+########################################################################################
+# use the OS version of the current machine to set the path
+#	set to "noarch" for architecture-neutral packages (no binaries)
+#
+#	set to "multi" for architecture-specific but OS-backward compatible
+#	packages, use symlinks as needed
+# no  used in this module, applies to all OS versions
+set arch $env(ARCH)
+########################################################################################
+
+if {[file isdirectory $packagedir/$arch]} {
+  set pkghome $packagedir/$arch
+} else {
+    if {![file isdirectory $packagedir]} {
+        puts stderr "No installation of $PACKAGE ($version) under $osrelease"
+        exit 1 
+    } else {
+        set pkghome $packagedir
+    }
+}
+
+
+
+
+############# load & unload dependencies #######################
+set mode [module-info mode]
+
+if {[info exists depends]} {
+	foreach modulename $depends {
+	  	if {  [is-loaded $modulename] && $mode == "unload" } { module unload $modulename }
+  		if { ![is-loaded $modulename] && $mode == "load" }   { module   load $modulename }
+	}
+}
+#####################################################################
+
+################## conflictsWARN ####################################
+if  {[info exists conflictsWARN]} {
+	foreach conflict $conflictsWARN {
+		if { [ is-loaded $conflict ] } {
+			# Check the case where the conflict is with a differently-numbered version of the
+			# same parent module
+	        	if { ! [ is-loaded $self ] } {
+	                	puts stderr "Conflicting module detected: $conflict.\n"
+				puts stderr "Unload the module with:\n"
+	                	puts stderr "\tmodule unload $conflict\n"
+	                	exit
+	        	}
+		}
+	}
+}
+#####################################################################
+
+################## conflictsUNLOAD ####################################
+if  {[info exists conflictsUNLOAD]} {
+	foreach conflict $conflictsUNLOAD {
+		if { [ is-loaded $conflict ] } {
+			# Check the case where the conflict is with a differently-numbered version of the
+			# same parent module
+	        	if { ! [ is-loaded $self ] } {
+	                	puts stderr "Conflicting module $conflict detected and automatically unloaded.\n"
+	                	module unload $conflict
+	        	}
+		}
+	}
+}
+#####################################################################
+
+
+
+
+if {[file isdirectory $pkghome/$version/bin]} {
+	prepend-path PATH $pkghome/$version/bin
+}
+if {[file isdirectory $pkghome/man]} {
+	prepend-path MANPATH $pkghome/share/man
+}
+if {[file isdirectory $pkghome/info]} {
+	prepend-path INFOPATH $pkghome/share/info
+}
+if {[file isdirectory $pkghome/lib]} {
+	prepend-path LD_LIBRARY_PATH $pkghome/lib
+	prepend-path CMAKE_LIBRARY_PATH $pkghome/lib
+}
+# Prepend lib64 after lib, to give lib64 preference
+if {[file isdirectory $pkghome/lib64]} {
+	prepend-path LD_LIBRARY_PATH $pkghome/lib64
+	prepend-path CMAKE_LIBRARY_PATH $pkghome/lib64
+}
+if {[file isdirectory $pkghome/include]} {
+	prepend-path C_INCLUDE_PATH $pkghome/include
+	prepend-path CXX_INCLUDE_PATH $pkghome/include
+	prepend-path CMAKE_INCLUDE_PATH $pkghome/include
+}
+if {[file isdirectory $pkghome/pkgconfig]} {
+	prepend-path PKG_CONFIG_PATH $pkghome/pkgconfig
+}
+if {[file isdirectory $pkghome/lib/pkgconfig]} {
+	prepend-path PKG_CONFIG_PATH $pkghome/lib/pkgconfig
+}
+if {[file isdirectory $pkghome/share/pkgconfig]} {
+	prepend-path PKG_CONFIG_PATH $pkghome/share/pkgconfig
+}
+
+set CMakeConfigFile [exec find $pkghome -type f -iname ${package}Config.cmake]
+if { $CMakeConfigFile ne "" } {
+	set CMakeConfigDir [ file dirname $CMakeConfigFile ]
+	prepend-path CMAKE_MODULE_PATH $CMakeConfigDir
+}
+	
+
+setenv ${PACKAGE}_DIR $pkghome
+setenv ${PACKAGE}_VERSION $version
+setenv SINGULARITYENV_NSLOTS [getenv NSLOTS]
+setenv SINGULARITYENV_ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS [getenv NSLOTS]
+setenv SINGULARITYENV_OMP_NUM_THREADS [getenv NSLOTS]
+setenv SINGULARITYENV_OMP_THREAD_LIMIT [getenv NSLOTS]
+setenv SINGULARITYENV_MKL_NUM_THREADS [getenv NSLOTS]
+setenv SINGULARITYENV_OPENBLAS_NUM_THREADS [getenv NSLOTS]
+setenv SINGULARITYENV_ANTS_RANDOM_SEED 123
+setenv SINGULARITY_BINDPATH /cbica
